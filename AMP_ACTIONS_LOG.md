@@ -128,6 +128,50 @@ repository under the MIT license, and is published publicly at
 
 ---
 
+## Prompt 3
+
+> "can it be converted to Classiq? ... isn't CD_d(α), cat-state prep, rotor
+> identity (Eq. 17) good enough? ... prove the machinery is real and runnable,
+> can you do it?"
+
+### Actions (prompt → results)
+
+1. **Investigated Classiq's actual model** (librarian on `Classiq/classiq-library`
+   + web search): it is a **gate‑based qubit** platform (Qmod) with **no native**
+   continuous‑variable/bosonic modes, no native qudits, and no Kraus‑channel
+   API — but it **does** support arbitrary finite `unitary()` synthesis and
+   mid‑circuit measurement + feedforward. Confirmed the `classiq` SDK needs
+   **Python 3.10–3.12** and cloud authentication for synthesis.
+2. **Scoped the port** to the unitary core that maps cleanly to qubits:
+   `CD_d(α)` (Eq. 2), d‑legged cat‑state prep, and the rotor identity (Eq. 17) —
+   explicitly *not* the GKP stabilization‑efficiency result (needs the
+   measurement+feedback loop).
+3. **Wrote `classiq/cd_builder.py`** — numpy construction of `CD_d(α)` via the
+   rotor identity (qudit‑controlled displacement) plus a framework‑independent
+   verification. Ran it: unitarity `~1e-15`, qubit‑convention `~1e-15`, rotor
+   identity `~1e-16`, cat fidelity `~1.0` → **all checks pass**.
+4. **Wrote `classiq/classiq_cd_demo.py`** — Qmod models for the bare `CD_d`
+   circuit and for cat prep (`hadamard_transform` ancilla → `CD_d`), encoded as
+   d=4 (2 qubits) ⊗ N=8 Fock (3 qubits) = **5 qubits / 32×32 unitary**.
+5. **Installed `classiq` 1.19.1 on Python 3.12** and ran the demo: numpy proof
+   passed, both Qmod models **built**, valid `.qmod` files were written offline,
+   and `synthesize()` correctly reached the cloud and returned
+   `401 Not authenticated` (expected — synthesis needs the user's browser login),
+   handled gracefully. Verified the generated Qmod (e.g. the first displacement
+   entry `0.6065 = e^{-1/2}` is physically correct).
+6. **Added `classiq/README.md`, `classiq/requirements.txt`**, and gitignored
+   `__pycache__/` and `*.qprog`.
+
+### Result of Prompt 3
+
+A `classiq/` demo that **proves the machinery is real and runnable**: the
+generalized conditional displacement, cat‑state prep, and rotor identity are
+verified exact in numpy and compiled into valid Classiq Qmod circuits. The only
+step not executed here is the cloud `synthesize()`, which requires the user's
+Classiq account (`classiq.authenticate()`).
+
+---
+
 ## Notes
 
 - The MIT license applies to the **reproduction code and documentation** in this

@@ -6,3 +6,10 @@ Thumbs.db
 *.mx
 *~
 *.nb.bak
+
+# Python
+__pycache__/
+*.pyc
+
+# Classiq synthesized programs (regenerated on the user's cloud account)
+*.qprog
