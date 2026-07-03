@@ -1,5 +1,33 @@
 # Generalized Conditional Displacement — Wolfram Language reproduction
 
+## From Research Paper to Runnable Qubits
+
+**Turning a bosonic quantum-error-correction operator into an executable quantum function.**
+
+How an AI coding agent (Amp) took arXiv:2405.09977 *"Generalized Conditional
+Displacement"* from **PDF → a verified Wolfram reproduction → a gate-based
+circuit that runs on two backends (Classiq and Qiskit).**
+
+```
+Research paper ─▶ Understand ─▶ Reproduce ─▶ Extract the core ─▶ Port to gates ─▶ Verify ─▶ Two backends
+ arXiv:2405.09977   the physics   (Wolfram)   CD_d(α), cat,        (qubit circuit)  fidelity  Classiq (Qmod)
+                                              rotor identity                        = 1.0    + Qiskit (free/local)
+```
+
+### Honest caveat on "runnable"
+
+"Runnable / executable" here means a **verified gate circuit** that runs on a
+**local statevector simulator** and exports to **OpenQASM 3** for any backend —
+**not** a run on real quantum hardware. The value is that **one item from the
+paper** (the `CD_d(α)` operator + d-legged cat prep + rotor identity) is taken
+end-to-end into a working function, with **two ways to run it**: Classiq (Qmod)
+once a synthesis-enabled plan is available, and Qiskit (free and fully local)
+today. The continuous-variable GKP *stabilization-efficiency* result — the
+paper's headline claim — is reproduced in the Wolfram model but is **not** part
+of the gate-circuit demo (it needs mid-circuit measurement + feedback).
+
+---
+
 A Wolfram Language / Mathematica reproduction of
 
 > S. Even-Haim, A. A. Diringer, R. Ruimy, G. Baranes, A. Gorlach,
