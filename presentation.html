@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>From Research Paper to Runnable Qubits — Generalized Conditional Displacement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#05060f; --bg1:#0a0e26; --bg2:#0d1330;
+  --cyan:#22d3ee; --blue:#3b82f6; --violet:#a855f7; --magenta:#ec4899;
+  --text:#e8edff; --dim:#96a3cc; --faint:#6b76a3;
+  --line:rgba(120,150,255,.16);
+  --card:rgba(18,24,54,.6);
+  --grad:linear-gradient(90deg,#22d3ee 0%,#6d8bff 45%,#a855f7 75%,#ec4899 100%);
+  --ok:#34d399;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Inter',system-ui,sans-serif;color:var(--text);
+  background:var(--bg0);overflow:hidden;position:fixed;inset:0;
+  -webkit-font-smoothing:antialiased;
+}
+/* ambient quantum background */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+.bg::before{content:"";position:absolute;inset:0;
+  background:
+   radial-gradient(1100px 700px at 78% -10%,rgba(168,85,247,.20),transparent 60%),
+   radial-gradient(900px 700px at 8% 110%,rgba(34,211,238,.16),transparent 60%),
+   radial-gradient(700px 500px at 100% 100%,rgba(236,72,153,.12),transparent 60%),
+   var(--bg0);}
+.bg::after{content:"";position:absolute;inset:0;opacity:.5;
+  background-image:radial-gradient(rgba(140,170,255,.10) 1px,transparent 1px);
+  background-size:34px 34px;mask:radial-gradient(circle at 50% 45%,#000 0%,transparent 78%);}
+.orb{position:absolute;border-radius:50%;filter:blur(1px);opacity:.7;
+  box-shadow:0 0 18px currentColor;animation:float linear infinite}
+@keyframes float{0%{transform:translateY(0) translateX(0)}50%{transform:translateY(-26px) translateX(14px)}100%{transform:translateY(0) translateX(0)}}
+
+/* horizontal deck */
+.track{display:flex;height:100vh;width:max-content;position:relative;z-index:1;
+  transition:transform .55s cubic-bezier(.7,.02,.24,1)}
+.slide{flex:0 0 100vw;height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:clamp(16px,3.4vw,50px);overflow:hidden}
+.inner{width:min(1120px,94vw);max-height:90vh;display:flex;flex-direction:column;gap:clamp(.5rem,1.3vw,1rem)}
+.center{align-items:center;text-align:center}
+
+.kicker{font-size:clamp(10px,1.35vw,13px);font-weight:700;letter-spacing:.28em;text-transform:uppercase;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1{font-size:clamp(30px,6.2vw,70px);font-weight:900;line-height:1.02;letter-spacing:-.02em}
+h2{font-size:clamp(21px,3.5vw,40px);font-weight:800;line-height:1.08;letter-spacing:-.01em}
+h3{font-size:clamp(15px,2vw,21px);font-weight:700}
+p,li{font-size:clamp(13px,1.6vw,17.5px);line-height:1.5;color:var(--text)}
+.lead{color:var(--dim);font-size:clamp(14px,1.9vw,20px);line-height:1.5}
+.gr{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+strong{color:#fff}
+small{color:var(--dim)}
+.dim{color:var(--dim)}
+ul{padding-left:1.15em}li{margin:.24em 0}
+a{color:var(--cyan);text-decoration:none;border-bottom:1px dotted rgba(34,211,238,.4)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(.6rem,1.6vw,1.1rem)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(.6rem,1.4vw,1rem)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:clamp(.7rem,1.7vw,1.15rem);backdrop-filter:blur(7px)}
+.card h3{margin-bottom:.35rem}
+.card.hl{border-color:rgba(168,85,247,.45);box-shadow:0 0 30px rgba(168,85,247,.14)}
+.tag{display:inline-block;font-size:clamp(9.5px,1.2vw,12px);font-weight:600;color:var(--cyan);
+  border:1px solid var(--line);border-radius:999px;padding:.15rem .6rem;background:rgba(34,211,238,.06)}
+
+/* flow diagram */
+.flow{display:flex;flex-wrap:wrap;gap:.5rem;align-items:stretch;justify-content:center;margin:.3rem 0}
+.node{padding:.5rem .85rem;border-radius:13px;background:var(--card);border:1px solid var(--line);
+  font-weight:600;font-size:clamp(11px,1.45vw,15px);text-align:center;line-height:1.25;
+  display:flex;flex-direction:column;justify-content:center;min-width:0}
+.node small{font-weight:400;color:var(--dim);font-size:.82em;margin-top:.15rem}
+.node.c{border-color:rgba(34,211,238,.45);box-shadow:0 0 20px rgba(34,211,238,.12)}
+.node.v{border-color:rgba(168,85,247,.5);box-shadow:0 0 20px rgba(168,85,247,.16)}
+.node.m{border-color:rgba(236,72,153,.5);box-shadow:0 0 20px rgba(236,72,153,.14)}
+.ar{align-self:center;color:var(--cyan);font-size:1.15rem;opacity:.85;font-weight:700}
+.flow.col{flex-direction:column;align-items:stretch}
+.flow.col .ar{transform:rotate(90deg)}
+
+/* stats */
+.stats{display:flex;flex-wrap:wrap;gap:clamp(.6rem,1.6vw,1.2rem);justify-content:center}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(.7rem,1.6vw,1.1rem) clamp(.9rem,2vw,1.4rem);text-align:center;min-width:clamp(120px,20vw,180px)}
+.stat b{display:block;font-size:clamp(22px,3.8vw,44px);font-weight:800;line-height:1;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat span{font-size:clamp(10.5px,1.35vw,13px);color:var(--dim)}
+
+/* table */
+table.data{border-collapse:collapse;width:100%;font-size:clamp(10.5px,1.4vw,15px)}
+table.data th,table.data td{border-bottom:1px solid var(--line);padding:.34rem .55rem;text-align:left;vertical-align:top}
+table.data th{color:var(--cyan);font-weight:600;font-size:.92em}
+table.data td.n,table.data th.n{text-align:right;font-family:'JetBrains Mono',monospace}
+.ok{color:var(--ok);font-weight:700}
+.mono{font-family:'JetBrains Mono',monospace}
+code{font-family:'JetBrains Mono',monospace;background:rgba(120,150,255,.1);border:1px solid var(--line);
+  border-radius:6px;padding:.05em .4em;font-size:.88em;color:#cfe4ff}
+pre{font-family:'JetBrains Mono',monospace;background:rgba(6,10,26,.75);border:1px solid var(--line);
+  border-radius:12px;padding:clamp(.6rem,1.4vw,1rem);overflow:auto;font-size:clamp(10.5px,1.35vw,14px);line-height:1.5;color:#cfe4ff}
+pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre .d{color:var(--faint)}
+
+/* figures */
+.figwrap{display:flex;flex-direction:column;align-items:center;gap:.6rem}
+.fig{max-height:52vh;max-width:100%;border-radius:14px;border:1px solid var(--line);
+  background:#fff;box-shadow:0 12px 50px rgba(0,0,0,.55)}
+.cap{font-size:clamp(11.5px,1.5vw,15px);color:var(--dim);line-height:1.45;max-width:60ch;text-align:center}
+
+.refs{columns:2;column-gap:2rem;font-size:clamp(11.5px,1.45vw,15px);line-height:1.7}
+.refs a{display:block;break-inside:avoid}
+
+.foot{font-size:clamp(10px,1.3vw,13px);color:var(--faint);letter-spacing:.04em}
+
+/* controls */
+.nav{position:fixed;top:50%;transform:translateY(-50%);z-index:60;width:clamp(40px,4.8vw,54px);height:clamp(40px,4.8vw,54px);
+  border-radius:50%;display:grid;place-items:center;cursor:pointer;background:var(--card);border:1px solid var(--line);
+  color:var(--text);font-size:1.5rem;backdrop-filter:blur(8px);transition:.2s;user-select:none}
+.nav:hover{border-color:var(--cyan);box-shadow:0 0 22px rgba(34,211,238,.32)}
+.nav.prev{left:clamp(8px,1.8vw,22px)} .nav.next{right:clamp(8px,1.8vw,22px)}
+.nav.hidden{opacity:0;pointer-events:none}
+.progress{position:fixed;left:0;bottom:0;height:4px;width:100%;background:rgba(255,255,255,.06);z-index:60}
+.progress>i{display:block;height:100%;width:0;background:var(--grad);box-shadow:0 0 12px rgba(168,85,247,.55);transition:width .45s}
+.counter{position:fixed;right:14px;bottom:12px;z-index:60;font-size:clamp(11px,1.4vw,14px);color:var(--dim);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.hint{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;color:var(--dim);font-size:12.5px;letter-spacing:.22em;animation:pulse 1.9s infinite;text-transform:uppercase}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:.95}}
+
+/* atom on title */
+.atom{position:relative;width:clamp(120px,20vw,190px);height:clamp(120px,20vw,190px);margin:0 auto}
+.atom i{position:absolute;inset:0;border:1.5px solid rgba(120,160,255,.4);border-radius:50%}
+.atom i:nth-child(1){transform:rotate(0deg) scaleY(.4);border-color:rgba(34,211,238,.55)}
+.atom i:nth-child(2){transform:rotate(60deg) scaleY(.4);border-color:rgba(168,85,247,.55)}
+.atom i:nth-child(3){transform:rotate(120deg) scaleY(.4);border-color:rgba(236,72,153,.5)}
+.atom .nuc{position:absolute;top:50%;left:50%;width:16px;height:16px;margin:-8px;border-radius:50%;
+  background:var(--grad);box-shadow:0 0 24px rgba(168,85,247,.8)}
+.spin{animation:spin 14s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+
+@media (max-width:760px){
+  .grid2,.grid3{grid-template-columns:1fr}
+  .fig{max-height:42vh}
+  .refs{columns:1}
+  .flow{gap:.4rem}
+  .inner{gap:.5rem}
+}
+@media (max-height:560px){
+  .fig{max-height:40vh}
+}
+</style>
+</head>
+<body>
+<div class="bg" id="bg"></div>
+
+<div class="track" id="track">
+
+  <!-- 1 TITLE -->
+  <section class="slide"><div class="inner center">
+    <div class="atom spin"><i></i><i></i><i></i><span class="nuc"></span></div>
+    <div class="kicker">Bosonic quantum computing · arXiv:2405.09977</div>
+    <h1>From Research Paper<br>to <span class="gr">Runnable Qubits</span></h1>
+    <p class="lead">Turning a bosonic quantum-error-correction operator — the <strong>generalized conditional displacement</strong> — into an executable quantum function.</p>
+    <p class="dim">PDF → verified Wolfram reproduction → a gate circuit that runs on <strong>two backends</strong> (Classiq &amp; Qiskit).</p>
+    <p class="foot">An AI-agent engineering pipeline · single-mode CV physics → discrete-variable circuits</p>
+  </div></section>
+
+  <!-- 2 THESIS -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">The claim, stated honestly</div>
+    <h2>One item from the paper, taken all the way to a working function</h2>
+    <div class="grid2">
+      <div class="card hl"><h3 class="gr">What we built</h3>
+        <p>A faithful, numerically-verified reproduction of the paper in the Wolfram Language, then a gate-based circuit of its unitary core that <strong>runs end-to-end on a laptop</strong> and exports to portable OpenQASM 3.</p></div>
+      <div class="card"><h3>The honest caveat</h3>
+        <p>“<strong>Runnable / executable</strong>”, not “ran on real quantum hardware.” It is a verified gate circuit on a <strong>statevector simulator</strong> + OpenQASM 3 for any backend — with two ways to synthesize/run it.</p></div>
+    </div>
+    <div class="flow">
+      <span class="node c">Paper</span><span class="ar">→</span>
+      <span class="node">Wolfram model<small>verified</small></span><span class="ar">→</span>
+      <span class="node v">Extract core<small>3 objects</small></span><span class="ar">→</span>
+      <span class="node">Gate circuit</span><span class="ar">→</span>
+      <span class="node m">Run · 2 backends</span>
+    </div>
+  </div></section>
+
+  <!-- 3 THE PAPER -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">The source</div>
+    <h2>“Generalized Conditional Displacement”</h2>
+    <div class="grid2">
+      <div class="card">
+        <p><strong>S. Even-Haim, A. A. Diringer, R. Ruimy, G. Baranes, A. Gorlach, S. Hacohen-Gourgy, I. Kaminer</strong></p>
+        <p class="dim" style="margin-top:.4rem">Technion — Israel Institute of Technology · MIT · arXiv:2405.09977v3</p>
+        <p style="margin-top:.5rem"><a href="https://arxiv.org/abs/2405.09977" target="_blank">arxiv.org/abs/2405.09977</a></p>
+      </div>
+      <div class="card hl"><h3>Core idea</h3>
+        <p>Conditional displacement (CD) — displacing a harmonic oscillator conditioned on an ancilla — generalized from a <strong>qubit</strong> to a <strong>qudit</strong> ancilla, enabling more efficient GKP error correction.</p></div>
+    </div>
+    <p class="lead">The abstract: a CD conditioned on a qudit “operates simultaneously on both symmetry axes of the GKP grid”, enabling <strong>more efficient stabilization and creation of GKP states</strong>.</p>
+  </div></section>
+
+  <!-- 4 WHY IT MATTERS -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Background · why oscillators</div>
+    <h2>Continuous-variable quantum error correction</h2>
+    <div class="grid3">
+      <div class="card"><h3 class="gr">Bosonic codes</h3><p>Encode a logical qubit in the infinite-dimensional Hilbert space of a harmonic oscillator: <strong>cat</strong>, <strong>binomial</strong>, <strong>GKP</strong> codes.</p></div>
+      <div class="card"><h3 class="gr">GKP</h3><p>Gottesman–Kitaev–Preskill: a grid of translations in phase space. Stabilizers are displacement operators on a lattice.</p></div>
+      <div class="card"><h3 class="gr">Hybrid CV–DV</h3><p>Pair the oscillator with a discrete ancilla (qubit/qudit) for control &amp; readout — as in trapped-ion &amp; circuit-QED experiments.</p></div>
+    </div>
+    <p class="lead">The workhorse of this whole field is <strong>one gate</strong>: conditional displacement — it controls, measures, and stabilizes GKP states. <a href="https://doi.org/10.1103/PhysRevA.64.012310" target="_blank">GKP, PRA 64, 012310 (2001)</a></p>
+  </div></section>
+
+  <!-- 5 CD2 -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">The building block</div>
+    <h2>Conditional displacement — the “Swiss-army knife”</h2>
+    <div class="grid2">
+      <div class="card"><h3>Qubit CD (Eq. 1)</h3>
+        <pre><span class="v">CD₂(α)</span> = D(αZ)
+   = |0⟩⟨0| ⊗ <span class="c">D(α)</span>
+   + |1⟩⟨1| ⊗ <span class="c">D(−α)</span></pre>
+        <p class="dim" style="margin-top:.4rem"><span class="mono">D(α)=exp(α a† − α* a)</span> — a unitary displacement of the oscillator.</p></div>
+      <div class="card"><h3>The limitation</h3>
+        <p>A qubit carries <strong>1 bit</strong> per interaction, but the GKP grid has <strong>two</strong> quadrature axes (q and p) that both need stabilizing → a qubit protocol treats them separately → more operations → more decoherence.</p></div>
+    </div>
+  </div></section>
+
+  <!-- 6 CDd -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">The generalization · Eq. 2</div>
+    <h2>Qudit conditional displacement <span class="gr">CD_d(α)</span></h2>
+    <div class="grid2">
+      <div class="card hl">
+        <pre><span class="v">CD_d(α)</span> = Σ_{s=0}^{d−1} |s⟩⟨s| ⊗ <span class="c">D(α ω_d^s)</span>
+        ω_d = exp(i·2π/d)</pre>
+        <p class="dim" style="margin-top:.4rem">Block-diagonal: the ancilla level <span class="mono">s</span> rotates the displacement phase. Unitary; reduces to Eq. 1 for d = 2.</p></div>
+      <div class="card"><h3>Why it wins</h3>
+        <p>A single <span class="mono">CD_d</span> addresses <strong>both</strong> GKP quadratures at once. One qudit round costs fewer CD operations than the qubit protocol → the paper's efficiency result (Fig. 2d).</p></div>
+    </div>
+    <p class="lead">The qudit's larger Hilbert space = extra degrees of freedom to “gain information faster with fewer operations.”</p>
+  </div></section>
+
+  <!-- 7 WHAT PAPER DELIVERS -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">What the paper delivers</div>
+    <h2>Five results we reproduced</h2>
+    <div class="grid3">
+      <div class="card"><span class="tag">Eq. 2</span><p style="margin-top:.4rem">The <strong>CD_d(α)</strong> operator</p></div>
+      <div class="card"><span class="tag">Eq. 3, 5, 6</span><p style="margin-top:.4rem"><strong>d-legged cat states</strong> from ancilla measurement</p></div>
+      <div class="card"><span class="tag">Eq. 8–11</span><p style="margin-top:.4rem">Qudit <strong>GKP stabilizer Kraus</strong> operators + observable</p></div>
+      <div class="card"><span class="tag">Fig. 2d</span><p style="margin-top:.4rem"><strong>Sharpen–trim GKP stabilization</strong> efficiency</p></div>
+      <div class="card"><span class="tag">Eq. 17</span><p style="margin-top:.4rem"><strong>Ideal rotor</strong> physical implementation</p></div>
+      <div class="card hl"><p class="gr" style="font-weight:700">All cross-checked vs the official Wolfram Quantum Framework</p></div>
+    </div>
+  </div></section>
+
+  <!-- 8 PIPELINE OVERVIEW -->
+  <section class="slide"><div class="inner center">
+    <div class="kicker">The end-to-end pipeline</div>
+    <h2>From PDF to a running circuit</h2>
+    <div class="flow col" style="width:min(760px,92vw)">
+      <span class="node c">① Ingest paper<small>extract text + equations from the PDF</small></span><span class="ar">→</span>
+      <span class="node">② Reproduce in Wolfram<small>package (.wl) + scripts (.wls) + notebook (.nb)</small></span><span class="ar">→</span>
+      <span class="node">③ Verify<small>validation suite + 48-check audit + Wolfram QF oracle</small></span><span class="ar">→</span>
+      <span class="node v">④ Extract unitary core<small>CD_d · cat prep · rotor identity</small></span><span class="ar">→</span>
+      <span class="node">⑤ Encode CV → qubits<small>d=4 ⊗ Fock N=8 = 5 qubits</small></span><span class="ar">→</span>
+      <span class="node m">⑥ Synthesize &amp; run<small>Classiq (Qmod) + Qiskit (free, local)</small></span>
+    </div>
+  </div></section>
+
+  <!-- 9 PHASE 1 -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Mathematica phase 1</div>
+    <h2>Ingesting &amp; understanding the paper</h2>
+    <div class="grid2">
+      <div class="card"><h3>Extract</h3><p>PDF → plain text; isolate the governing equations (1, 2, 3, 5–11, 17) and the figure semantics (1c, 2d, 4).</p></div>
+      <div class="card"><h3>Map to code</h3><p>Decide the truncated Fock representation, the qudit clock/shift algebra, and the exact operator conventions to implement.</p></div>
+    </div>
+    <div class="flow">
+      <span class="node">2405.09977v3.pdf</span><span class="ar">→</span>
+      <span class="node">paper.txt</span><span class="ar">→</span>
+      <span class="node v">equation inventory</span><span class="ar">→</span>
+      <span class="node c">implementation spec</span>
+    </div>
+    <p class="dim">A deliberate scoping note was preserved: the exact finite-energy qubit <em>trim</em> feedback lives in the paper's supplementary material (not in this PDF), so it was reconstructed from the main text and verified by convergence.</p>
+  </div></section>
+
+  <!-- 10 WOLFRAM FOR QC -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Mathematica phase 2 · what Wolfram has for quantum computing</div>
+    <h2>The Wolfram <span class="gr">Quantum Framework</span></h2>
+    <div class="grid2">
+      <div class="card"><h3>Official paclet (v1.6.5)</h3>
+        <p>From <a href="https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/QuantumFramework/" target="_blank">resources.wolframcloud.com</a>. Provides <code>QuantumState</code>, <code>QuantumOperator</code>, <code>QuantumCircuitOperator</code> — gate-based DV tooling.</p></div>
+      <div class="card"><h3><code>SecondQuantization</code> context</h3>
+        <p>Bosonic tools: <code>DisplacementOperator</code>, <code>CoherentState</code>, <code>CatState</code>, <code>FockState</code>, <code>WignerRepresentation</code>, annihilation/creation.</p></div>
+    </div>
+    <div class="card hl"><h3>Used as an independent oracle</h3>
+      <p>We verified our displacement against the paclet: <code>DisplacementOperator[α,"Ordering"→"Weak"]</code> equals <code>MatrixExp[α a† − α* a]</code> to <strong>deviation 0</strong>. Physics grounded in the vendor's own tooling.</p></div>
+  </div></section>
+
+  <!-- 11 WHY WL/WLS not NB -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Architecture decision</div>
+    <h2>Why <span class="gr">.wl</span> + <span class="gr">.wls</span>, not just <span class="gr">.nb</span></h2>
+    <div class="grid3">
+      <div class="card"><h3 class="gr">.wl — package</h3><p>The <strong>single source of truth</strong>. Pure library code, a public API with usage messages, loadable via <code>Get</code>/<code>Needs</code>. Plain text → clean git diffs, reusable everywhere.</p></div>
+      <div class="card"><h3 class="gr">.wls — script</h3><p><strong>Headless automation</strong>. Runs from the CLI/CI with <code>wolframscript</code> — no GUI. Deterministic, reproducible builds &amp; audits.</p></div>
+      <div class="card"><h3 class="gr">.nb — notebook</h3><p>A <strong>thin presentation layer</strong> that <code>Get</code>s the package. Great for interactive narrative + inline output; poor as source-of-truth (mixed code/output, weak diffs).</p></div>
+    </div>
+    <div class="flow">
+      <span class="node c">GeneralizedCD.wl<small>logic</small></span><span class="ar">→</span>
+      <span class="node">build_project.wls<small>regenerate figures/reports</small></span>
+      <span class="node">proof_audit.wls<small>48 checks</small></span><span class="ar">→</span>
+      <span class="node v">GeneralizedCD.nb<small>narrative</small></span>
+    </div>
+    <p class="dim">Separation of concerns = reproducibility. The same verified library feeds the notebook, the automated build, and later the circuit exports.</p>
+  </div></section>
+
+  <!-- 12 PACKAGE STRUCTURE -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">src/GeneralizedCD.wl</div>
+    <h2>The package: one API, grouped by physics</h2>
+    <div class="grid2">
+      <div class="card"><h3>Bosonic core</h3><p class="mono" style="font-size:.85em">Annihilation · Creation · NumberOperator · Vacuum · Displacement · CoherentStateVec</p></div>
+      <div class="card"><h3>Qudit &amp; CD</h3><p class="mono" style="font-size:.85em">RootOfUnity · QuditZ · QuditX · QuditXEigenstate · GeneralizedCD</p></div>
+      <div class="card"><h3>Cats &amp; Kraus (Eq. 3–11)</h3><p class="mono" style="font-size:.85em">LeggedCatState · CatCreationKraus · QuditMeasBasis · QuditStabilizerKraus · QuditStabilizerKrausEq10 · QuditHermitianObservable</p></div>
+      <div class="card"><h3>Wigner · stabilization · rotor</h3><p class="mono" style="font-size:.85em">WignerFunction · RunQuditStabilization · RunQuditSharpen · RunQubitSharpen · RotorCDIdentityResidual · ValidateWolframIntegration · RunValidationSuite</p></div>
+    </div>
+    <p class="dim">Every exported symbol carries a <code>::usage</code> message tied to a paper equation.</p>
+  </div></section>
+
+  <!-- 13 KEY DECISIONS -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Subtle physics &amp; engineering</div>
+    <h2>Three decisions that make it correct</h2>
+    <div class="grid3">
+      <div class="card"><h3 class="gr">Weak ordering</h3><p>The physical, unitary displacement is <span class="mono">exp(α a†−α* a)</span> = the paclet's <code>"Ordering"→"Weak"</code>. The default <code>"Normal"</code> ordering is <strong>not</strong> the operator we need.</p></div>
+      <div class="card"><h3 class="gr">Custom Wigner</h3><p>Displaced-parity form <span class="mono">W=(2/π)⟨ψ|D†ΠD|ψ⟩</span> — robust for raw truncated state vectors where the paclet mis-parsed dimensions.</p></div>
+      <div class="card"><h3 class="gr">Numeric α only</h3><p>Validation uses numeric amplitudes; symbolic α made the paclet attempt huge symbolic matrix exponentials and exhaust memory.</p></div>
+    </div>
+    <p class="lead">Fock truncation = <strong>80</strong> levels for publication-quality results.</p>
+  </div></section>
+
+  <!-- 14 NOTEBOOK STRUCTURE -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">GeneralizedCD.nb · 38 cells (8 sections)</div>
+    <h2>What the notebook walks through</h2>
+    <div class="grid2">
+      <table class="data">
+        <tr><th>#</th><th>Section</th><th>Ref</th></tr>
+        <tr><td>1</td><td>Load package + Wolfram QF</td><td>—</td></tr>
+        <tr><td>2</td><td>The CD_d operator</td><td>Eq. 2</td></tr>
+        <tr><td>3</td><td>d-legged cats + Wigner</td><td>Fig. 1c</td></tr>
+        <tr><td>4</td><td>Cat creation by measurement</td><td>Eq. 5,6</td></tr>
+      </table>
+      <table class="data">
+        <tr><th>#</th><th>Section</th><th>Ref</th></tr>
+        <tr><td>5</td><td>GKP stabilizer Kraus</td><td>Eq. 8–11</td></tr>
+        <tr><td>6</td><td>GKP stabilization</td><td>Fig. 2d</td></tr>
+        <tr><td>7</td><td>Ideal rotor implementation</td><td>Eq. 17</td></tr>
+        <tr><td>8</td><td>Full validation suite</td><td>—</td></tr>
+      </table>
+    </div>
+    <p class="dim">Title · Subtitle · 8 Section · 14 Text · 14 Input cells — including interactive <code>Manipulate</code> explorers for legs <span class="mono">d</span> and amplitude <span class="mono">α</span>. Every input cell verified to evaluate end-to-end.</p>
+  </div></section>
+
+  <!-- 15 RESULTS TABLE -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Results · RunValidationSuite[] · Fock = 80</div>
+    <h2>Everything checks out — to machine precision</h2>
+    <table class="data">
+      <tr><th>Check</th><th>Paper ref</th><th class="n">Result</th><th>Status</th></tr>
+      <tr><td>CD_d unitarity</td><td>Eq. 2</td><td class="n">1.8×10⁻¹⁵</td><td class="ok">PASS</td></tr>
+      <tr><td>CD_d reduces to CD₂</td><td>Eq. 1,2</td><td class="n">0</td><td class="ok">PASS</td></tr>
+      <tr><td>Kraus Eq. 9 = Eq. 10</td><td>Eq. 9,10</td><td class="n">0</td><td class="ok">PASS</td></tr>
+      <tr><td>POVM completeness</td><td>Eq. 9</td><td class="n">0</td><td class="ok">PASS</td></tr>
+      <tr><td>Eq. 11 eigenvectors = |j⟩</td><td>Eq. 8,11</td><td class="n">0</td><td class="ok">PASS</td></tr>
+      <tr><td>Cat creation fidelity (min)</td><td>Eq. 5,6</td><td class="n">0.99999999999999</td><td class="ok">PASS</td></tr>
+      <tr><td>Rotor identity D(αZ̄)=CD_d</td><td>Eq. 17</td><td class="n">0</td><td class="ok">PASS</td></tr>
+      <tr><td>Wolfram QF displacement match</td><td>resources.wolframcloud.com</td><td class="n">0</td><td class="ok">PASS</td></tr>
+    </table>
+  </div></section>
+
+  <!-- 16 AUDIT -->
+  <section class="slide"><div class="inner center">
+    <div class="kicker">proof_audit.wls · independent checks</div>
+    <h2>A second, independent audit</h2>
+    <div class="stats">
+      <div class="stat"><b>48</b><span>checks PASS</span></div>
+      <div class="stat"><b>0</b><span>FAIL</span></div>
+      <div class="stat"><b>3</b><span>WARN (OCR / convention)</span></div>
+    </div>
+    <p class="lead">The 3 warnings are transcription/convention notes (e.g. a shared <span class="mono">e^{iπ/4}</span> phase omitted in the Eq. 10 print, an OCR artifact in a trim exponent) — <strong>not</strong> core failures. Eqs. 8/9/10 are independently verified exact.</p>
+  </div></section>
+
+  <!-- 17 FIG 1c -->
+  <section class="slide"><div class="inner center">
+    <div class="kicker">Figure 1c · reproduced</div>
+    <h2>d-legged cat states in phase space</h2>
+    <div class="figwrap">
+      <img class="fig" src="exports/figure1c_cat_wigners.png" alt="Wigner functions of d=2,3,4,6 cat states">
+      <p class="cap">Wigner functions of <span class="mono">|C_d⁰(α)⟩</span> for <strong>d = 2, 3, 4, 6</strong> in phase space (q,p). Red/yellow = positive, blue = negative quasiprobability. Each shows <strong>C_d rotational symmetry</strong> and oscillatory interference fringes between coherent components — the signature of non-classicality.</p>
+    </div>
+  </div></section>
+
+  <!-- 18 FIG 2d -->
+  <section class="slide"><div class="inner center">
+    <div class="kicker">Figure 2d · the efficiency result</div>
+    <h2>GKP stabilization from vacuum</h2>
+    <div class="figwrap">
+      <img class="fig" src="exports/figure2d_gkp_stabilization.png" alt="GKP stabilization curves">
+      <p class="cap"><strong>A</strong>: qudit d=4 sharpen+trim drives ⟨S⟩ → <strong>0.80</strong> with bounded photon number ⟨n⟩ ≈ 15 (70 CD ops). <strong>B</strong>: per-CD efficiency — the qudit (1 CD/round, both quadratures) reaches ⟨S⟩=0.5 in <strong>~6–7</strong> CD ops vs <strong>~10</strong> for the qubit. Fewer operations = the paper's central advantage.</p>
+    </div>
+  </div></section>
+
+  <!-- 19 FIG 4 -->
+  <section class="slide"><div class="inner center">
+    <div class="kicker">Figure 4 · ideal implementation</div>
+    <h2>Ideal CD₄ 4-legged cat</h2>
+    <div class="figwrap">
+      <img class="fig" src="exports/figure4_ideal_cd4_cat.png" alt="Wigner of ideal 4-legged cat">
+      <p class="cap">Wigner function of the ideal 4-legged cat (fidelity = 1) produced by <span class="mono">CD₄</span>. Clear <strong>C₄ symmetry</strong> and pronounced interference fringes — alternating positive/negative regions about the origin. This is the target the gate circuit must reproduce.</p>
+    </div>
+  </div></section>
+
+  <!-- 20 EXPORTS -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">C:\…\Bosonic Quantum Computing\exports</div>
+    <h2>Every artifact, and what it means</h2>
+    <table class="data">
+      <tr><th>File</th><th class="n">Size</th><th>Meaning</th></tr>
+      <tr><td class="mono">validation_results.json</td><td class="n">0.3 KB</td><td>Machine-readable results of the 8-check suite</td></tr>
+      <tr><td class="mono">validation_report.md</td><td class="n">1.5 KB</td><td>Human-readable validation table + Fig 2d summary</td></tr>
+      <tr><td class="mono">stabilization_data.csv</td><td class="n">9.3 KB</td><td>Raw trajectories: protocol, nCD, ReSx, ReSz, meanN</td></tr>
+      <tr><td class="mono">audit_report.txt</td><td class="n">3.4 KB</td><td>48 independent checks (48 PASS / 0 FAIL / 3 WARN)</td></tr>
+      <tr><td class="mono">figure1c_cat_wigners.png</td><td class="n">762 KB</td><td>Fig 1c — cat Wigner grid (d = 2,3,4,6)</td></tr>
+      <tr><td class="mono">figure2d_gkp_stabilization.png</td><td class="n">138 KB</td><td>Fig 2d — stabilization &amp; per-CD efficiency</td></tr>
+      <tr><td class="mono">figure4_ideal_cd4_cat.png</td><td class="n">375 KB</td><td>Fig 4 — ideal CD₄ 4-legged cat</td></tr>
+    </table>
+    <p class="dim">All regenerated in one command: <code>wolframscript -file build_project.wls</code> → “BUILD OK”.</p>
+  </div></section>
+
+  <!-- 21 WHAT WE SYNTHESIZE -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">From model to circuit · the scoping decision</div>
+    <h2>What we chose to synthesize — and why</h2>
+    <div class="grid2">
+      <div class="card hl"><h3 class="gr">Synthesized (unitary → gates)</h3>
+        <ul>
+          <li><strong>CD_d(α)</strong> — Eq. 2, the core operator</li>
+          <li><strong>d-legged cat prep</strong> — Eq. 3/5/6, its signature output</li>
+          <li><strong>Rotor identity</strong> — Eq. 17, its exact realization</li>
+        </ul>
+        <p class="dim" style="margin-top:.3rem">“What it is / what it makes / how to build it.” All are deterministic unitaries → they map cleanly to gate-based qubits.</p></div>
+      <div class="card"><h3>Deferred (needs more than unitaries)</h3>
+        <p>The GKP <strong>sharpen–trim</strong> loop (Fig. 2d) requires mid-circuit measurement, classical feedback, and <strong>non-unitary Kraus channels</strong> (dilation/postselection). It stays in the Wolfram model — out of scope for a pure unitary demo.</p></div>
+    </div>
+  </div></section>
+
+  <!-- 22 ENCODING -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">CV → DV · the encoding</div>
+    <h2>From an oscillator to 5 qubits</h2>
+    <div class="flow">
+      <span class="node c">Qudit d = 4<small>ancilla</small></span><span class="ar">→</span><span class="node">2 qubits</span>
+      <span class="ar" style="opacity:.4">＋</span>
+      <span class="node c">Fock N = 8<small>oscillator (truncated)</small></span><span class="ar">→</span><span class="node">3 qubits</span>
+    </div>
+    <div class="flow"><span class="node v" style="min-width:min(560px,90vw)">Total = 5 qubits → CD_d is a <strong>32 × 32 unitary</strong><small>index = q·N + f · qudit = high bits, oscillator = low bits</small></span></div>
+    <div class="grid2">
+      <div class="card"><h3>Built from the rotor identity</h3><p>CD_d assembled as the qudit-controlled displacement <span class="mono">D(α·Z̄_d)</span> (Eq. 17) — more faithful and cheaper than one flat dense unitary.</p></div>
+      <div class="card"><h3>Verified, not assumed</h3><p>Endianness is checked numerically: circuit statevector = numpy <span class="mono">CD·init</span> to <strong>5.6×10⁻¹⁷</strong>.</p></div>
+    </div>
+  </div></section>
+
+  <!-- 23 CLASSIQ -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Backend A · Classiq (Qmod)</div>
+    <h2>High-level synthesis</h2>
+    <div class="flow">
+      <span class="node">CD unitary</span><span class="ar">→</span>
+      <span class="node c">unitary(elements)<small>Qmod core function</small></span><span class="ar">→</span>
+      <span class="node">create_model<small>local</small></span><span class="ar">→</span>
+      <span class="node v">.qmod written<small>offline, valid</small></span><span class="ar">→</span>
+      <span class="node m">synthesize()<small>cloud</small></span>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>What ran locally</h3><p>Two models built (<code>generalized_cd</code>, <code>generalized_cd_cat</code>); valid <code>.qmod</code> files written with no account. Verified on classiq 1.19.1 / Python 3.12.</p></div>
+      <div class="card"><h3>The gate: paid synthesis</h3><p><code>synthesize()</code> needs the cloud. Auth succeeds, but the <strong>free plan returns 403 “not authorized.”</strong> The <code>.qmod</code> files are kept <strong>untouched</strong>, ready for when synthesis access is granted.</p></div>
+    </div>
+    <p class="dim"><a href="https://github.com/Classiq/classiq-library" target="_blank">Classiq library</a> · <a href="https://docs.classiq.io" target="_blank">docs.classiq.io</a></p>
+  </div></section>
+
+  <!-- 24 QISKIT -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Backend B · Qiskit — free &amp; fully local</div>
+    <h2>The runnable path, today</h2>
+    <div class="flow col" style="width:min(720px,92vw)">
+      <span class="node c">QuantumCircuit.unitary(CD)<small>UnitaryGate from the same matrix</small></span><span class="ar">→</span>
+      <span class="node">transpile → {cx, u}<small>optimization_level = 3</small></span><span class="ar">→</span>
+      <span class="node v">Statevector simulator<small>prepare |m=0⟩⊗|0⟩ · apply CD_d · herald m</small></span><span class="ar">→</span>
+      <span class="node m">verify = analytic d-legged cat</span>
+    </div>
+    <p class="dim">Both backends import the <strong>same verified core</strong>, <code>cd_builder.py</code> — one physics, two compilers.</p>
+  </div></section>
+
+  <!-- 25 QISKIT RESULTS -->
+  <section class="slide"><div class="inner center">
+    <div class="kicker">Qiskit results · ran on the machine</div>
+    <h2>Real + runnable, end-to-end</h2>
+    <div class="stats">
+      <div class="stat"><b>215</b><span>circuit depth</span></div>
+      <div class="stat"><b>296</b><span>gates (184 u · 112 cx)</span></div>
+      <div class="stat"><b>1.0000</b><span>cat fidelity (all m)</span></div>
+      <div class="stat"><b>5.6e-17</b><span>vs numpy reference</span></div>
+    </div>
+    <pre style="width:min(760px,92vw);text-align:left"><span class="d"># python qiskit_cd_demo.py  (Qiskit 2.5.0, Python 3.12)</span>
+transpile CD_d → {cx, u}: depth 215, gates {u:184, cx:112}
+ordering cross-check max|sv − CD·init| : <span class="g">5.55e-17</span>
+cat fidelity per m (0..3)             : <span class="g">[1.0, 1.0, 1.0, 1.0]</span>
+RESULT: <span class="g">REAL + RUNNABLE — circuit reproduces the cat</span></pre>
+  </div></section>
+
+  <!-- 26 OPENQASM -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Portability · generalized_cd_qiskit.qasm</div>
+    <h2>Valid <span class="gr">OpenQASM 3</span> — runs anywhere</h2>
+    <div class="grid2">
+      <div class="card"><h3>The artifact</h3>
+        <ul><li><strong>11.3 KB</strong>, OpenQASM 3.0</li><li><strong>112 <span class="mono">cx</span> + 184 <span class="mono">U</span></strong> — matches the transpile report exactly</li><li>Runs on essentially any simulator or hardware backend</li></ul></div>
+      <div class="card"><pre><span class="d">OPENQASM 3.0;</span>
+include "stdgates.inc";
+qubit[5] q;
+<span class="v">U</span>(2.0080, 1.3085, 1.8523) q[0];
+<span class="v">U</span>(1.4375, -0.5988, 1.3783) q[1];
+<span class="c">cx</span> q[0], q[1];
+   … <span class="d">(296 gates total)</span></pre></div>
+    </div>
+    <p class="dim"><a href="https://openqasm.com" target="_blank">openqasm.com</a> — a hardware-agnostic assembly for quantum circuits.</p>
+  </div></section>
+
+  <!-- 27 DUAL BACKEND -->
+  <section class="slide"><div class="inner center">
+    <div class="kicker">One physics core, two runners</div>
+    <h2>Two ways to synthesize / run</h2>
+    <div class="flow col" style="width:min(680px,92vw)">
+      <span class="node c">cd_builder.py<small>numpy CD_d(α) + verification — the shared, verified core</small></span>
+      <span class="ar">→</span>
+      <div class="flow" style="width:100%">
+        <span class="node v" style="flex:1">Classiq (Qmod)<small>.qmod ready · synthesize on a paid plan</small></span>
+        <span class="node m" style="flex:1">Qiskit (free/local)<small>transpile · simulate · OpenQASM 3 — today</small></span>
+      </div>
+    </div>
+    <p class="lead">Get an upgrade → <code>python classiq_cd_demo.py</code> synthesizes with <strong>no other changes</strong>.</p>
+  </div></section>
+
+  <!-- 28 REPO STRUCTURE -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">github.com/zuwasi/Bosonic-Quantum-Computing</div>
+    <h2>Repository structure</h2>
+    <div class="grid2">
+      <pre style="font-size:clamp(9.5px,1.25vw,13px)">Bosonic Quantum Computing/
+├── <span class="v">GeneralizedCD.nb</span>        evaluated notebook
+├── 2405.09977v3.pdf       source paper
+├── <span class="c">src/GeneralizedCD.wl</span>    the package (API)
+├── build_project.wls      regenerate exports
+├── proof_audit.wls        48-check audit
+├── exports/               figures · reports · data
+├── docs/                  proofs · references
+├── <span class="m">classiq/</span>               gate-based ports
+├── AMP_ACTIONS_LOG.md     full agent log
+└── LICENSE                MIT</pre>
+      <div class="card"><h3>Important parts</h3>
+        <ul>
+          <li><span class="mono">src/</span> — verified physics, single source of truth</li>
+          <li><span class="mono">exports/</span> — evidence: results + figures</li>
+          <li><span class="mono">classiq/</span> — the runnable circuit (both backends + <code>.qmod</code> + <code>.qasm</code>)</li>
+          <li><span class="mono">docs/plain_english_proof.md</span> — every equation, in words</li>
+          <li><span class="mono">AMP_ACTIONS_LOG.md</span> — the whole prompt-to-result trail</li>
+        </ul></div>
+    </div>
+  </div></section>
+
+  <!-- 29 COMMITS -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Traceable history</div>
+    <h2>Four commits, one story</h2>
+    <div class="flow col" style="width:min(820px,94vw)">
+      <span class="node">e8a4860 — Wolfram reproduction<small>package · scripts · notebook · exports</small></span><span class="ar">→</span>
+      <span class="node">9d9c7cf — Classiq (Qmod) port<small>.qmod models; evaluated notebook</small></span><span class="ar">→</span>
+      <span class="node m">ffc3f1f — free local Qiskit demo<small>proven real + runnable, free &amp; fully local</small></span><span class="ar">→</span>
+      <span class="node v">d2c91db — headline + honest caveat</span>
+    </div>
+    <p class="lead"><span class="mono">ffc3f1f</span> is the milestone: <strong>proven real and runnable, free and fully local</strong>.</p>
+  </div></section>
+
+  <!-- 30 CAVEAT -->
+  <section class="slide"><div class="inner center">
+    <div class="kicker">Scientific honesty</div>
+    <h2>The caveat — stated precisely</h2>
+    <div class="card hl" style="max-width:80ch">
+      <p style="font-size:clamp(15px,2vw,21px);line-height:1.55">Say “<span class="gr">runnable / executable</span>”, <strong>not</strong> “ran on quantum hardware.” What we have is a <strong>verified gate circuit</strong> that runs on a <strong>statevector simulator</strong> and exports to <strong>OpenQASM 3</strong> for any backend — with two ways to synthesize/run it (Classiq when the plan allows; Qiskit for free, today).</p>
+    </div>
+    <p class="lead">And the paper's continuous-variable GKP <em>stabilization-efficiency</em> result is reproduced in the <strong>Wolfram model</strong>, not in the gate-circuit demo (it needs mid-circuit measurement + feedback).</p>
+    <p class="dim">The accurate — and still impressive — claim: <strong>one item from the paper, taken all the way to a working function.</strong></p>
+  </div></section>
+
+  <!-- 31 WHAT IT PROVES -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Bottom line</div>
+    <h2>What this proves</h2>
+    <div class="grid3">
+      <div class="card"><h3 class="gr">Faithful</h3><p>The paper's operator, states, Kraus algebra &amp; rotor identity reproduced to machine precision, cross-checked against Wolfram QF.</p></div>
+      <div class="card"><h3 class="gr">Real + runnable</h3><p>Its unitary core compiles to a concrete gate circuit that executes end-to-end and reproduces the target cat at fidelity 1.0.</p></div>
+      <div class="card"><h3 class="gr">Portable + future-proof</h3><p>Free/local today via Qiskit + OpenQASM 3; Classiq <code>.qmod</code> kept untouched, drop-in for when synthesis access lands.</p></div>
+    </div>
+    <p class="lead center">Research PDF → verified science → a working quantum function — reproducibly, on a laptop.</p>
+  </div></section>
+
+  <!-- 32 REFERENCES -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">References &amp; sources</div>
+    <h2>Go deeper</h2>
+    <div class="refs">
+      <a href="https://arxiv.org/abs/2405.09977" target="_blank">▹ Even-Haim et al., “Generalized Conditional Displacement”, arXiv:2405.09977</a>
+      <a href="https://doi.org/10.1103/PhysRevA.64.012310" target="_blank">▹ Gottesman, Kitaev, Preskill — GKP codes, PRA 64, 012310</a>
+      <a href="https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/QuantumFramework/" target="_blank">▹ Wolfram Quantum Framework paclet</a>
+      <a href="https://reference.wolfram.com/language/" target="_blank">▹ Wolfram Language reference</a>
+      <a href="https://github.com/Classiq/classiq-library" target="_blank">▹ Classiq library (Qmod examples)</a>
+      <a href="https://docs.quantum.ibm.com" target="_blank">▹ Qiskit documentation</a>
+      <a href="https://openqasm.com" target="_blank">▹ OpenQASM 3 specification</a>
+      <a href="https://github.com/zuwasi/Bosonic-Quantum-Computing" target="_blank">▹ This project's repository</a>
+      <a href="https://qubit-il.com" target="_blank">▹ Qubit-IL — Israel's quantum community</a>
+    </div>
+  </div></section>
+
+  <!-- 33 CLOSE -->
+  <section class="slide"><div class="inner center">
+    <div class="atom spin"><i></i><i></i><i></i><span class="nuc"></span></div>
+    <div class="kicker">From research paper to runnable qubits</div>
+    <h1><span class="gr">Thank you</span></h1>
+    <p class="lead">One operator from a cutting-edge bosonic-QEC paper — reproduced, verified, and turned into a working, runnable quantum function on two backends.</p>
+    <p class="dim"><a href="https://github.com/zuwasi/Bosonic-Quantum-Computing" target="_blank">github.com/zuwasi/Bosonic-Quantum-Computing</a> · MIT</p>
+  </div></section>
+
+</div>
+
+<div class="nav prev" id="prev" aria-label="Previous slide">‹</div>
+<div class="nav next" id="next" aria-label="Next slide">›</div>
+<div class="progress"><i id="bar"></i></div>
+<div class="counter" id="counter">1 / 1</div>
+<div class="hint" id="hint">← swipe / arrows →</div>
+
+<script>
+(function(){
+  var track=document.getElementById('track');
+  var slides=Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var prev=document.getElementById('prev'), next=document.getElementById('next');
+  var bar=document.getElementById('bar'), counter=document.getElementById('counter'), hint=document.getElementById('hint');
+  var i=0, total=slides.length, moved=false;
+
+  function render(){
+    track.style.transform='translate3d('+(-i*100)+'vw,0,0)';
+    prev.classList.toggle('hidden', i===0);
+    next.classList.toggle('hidden', i===total-1);
+    bar.style.width=((i)/(total-1)*100)+'%';
+    counter.textContent=(i+1)+' / '+total;
+    if(moved && hint){hint.style.display='none';}
+  }
+  function go(n){ i=Math.max(0,Math.min(total-1,n)); if(n!==0){moved=true;} render(); }
+
+  next.addEventListener('click',function(){go(i+1);});
+  prev.addEventListener('click',function(){go(i-1);});
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(i+1);}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1);}
+    else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(total-1);}
+  });
+
+  // touch swipe
+  var tx=0,ty=0;
+  document.addEventListener('touchstart',function(e){tx=e.changedTouches[0].clientX;ty=e.changedTouches[0].clientY;},{passive:true});
+  document.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)){ go(dx<0?i+1:i-1); }
+  },{passive:true});
+
+  // mouse drag
+  var mx=null;
+  document.addEventListener('mousedown',function(e){mx=e.clientX;});
+  document.addEventListener('mouseup',function(e){
+    if(mx===null) return; var dx=e.clientX-mx; if(Math.abs(dx)>60){ go(dx<0?i+1:i-1); } mx=null;
+  });
+
+  // ambient particles
+  var bg=document.getElementById('bg'); var cols=['#22d3ee','#a855f7','#ec4899','#6d8bff'];
+  for(var k=0;k<26;k++){
+    var o=document.createElement('span'); o.className='orb';
+    var s=2+Math.random()*5; o.style.width=s+'px'; o.style.height=s+'px';
+    o.style.left=(Math.random()*100)+'%'; o.style.top=(Math.random()*100)+'%';
+    o.style.color=cols[k%cols.length];
+    o.style.animationDuration=(7+Math.random()*12)+'s'; o.style.animationDelay=(-Math.random()*10)+'s';
+    bg.appendChild(o);
+  }
+
+  render();
+  window.addEventListener('resize',render);
+})();
+</script>
+</body>
+</html>
