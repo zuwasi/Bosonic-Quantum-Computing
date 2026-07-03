@@ -1,0 +1,317 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 14.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[     14984,        308]
+NotebookOptionsPosition[     11248,        258]
+NotebookOutlinePosition[     11594,        273]
+CellTagsIndexPosition[     11551,        270]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell["Generalized Conditional Displacement", "Title",ExpressionUUID->"ceccaf73-8a45-9243-a0a2-640fbe786cdb"],
+
+Cell["A Wolfram Language reproduction of arXiv:2405.09977v3", "Subtitle",ExpressionUUID->"ceec44f7-e7d0-1248-9cf7-fbf5515bf5f1"],
+
+Cell["\<\
+Even-Haim, Diringer, Ruimy, Baranes, Gorlach, Hacohen-Gourgy, Kaminer, \
+\"Generalized Conditional Displacement\", arXiv:2405.09977v3 (Technion / MIT).\
+\>", "Text",ExpressionUUID->"cf66da4d-f5bd-0b40-a5db-4968a49e7fe7"],
+
+Cell["\<\
+This notebook builds the generalized conditional-displacement operator \
+CD_d(alpha) conditioned on a d-level qudit ancilla, creates the d-legged cat \
+states, verifies the GKP stabilizer Kraus operators (Eqs. 8-11), runs the \
+qudit sharpen-trim GKP stabilization, and checks the ideal rotor \
+implementation. Bosonic operators are cross-validated against the Wolfram \
+Quantum Framework (SecondQuantization), from \
+https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/\
+QuantumFramework/ .\
+\>", "Text",ExpressionUUID->"4ecc9709-5467-0849-8f2a-fb4e8c0cc82b"],
+
+Cell["\<\
+All heavy logic lives in the reusable package src/GeneralizedCD.wl. Run cells \
+top to bottom.\
+\>", "Text",ExpressionUUID->"6d88b9be-ce2e-4440-9a46-d9c80b934a82"],
+
+Cell["1. Load the package and the Wolfram Quantum Framework", "Section",ExpressionUUID->"2353c623-8cc1-984b-a349-39ecc8560971"],
+
+Cell["\<\
+The package uses a weak-ordered (unitary) displacement operator that is \
+verified identical to the paclet's DisplacementOperator[alpha, \"Ordering\" \
+-> \"Weak\"].\
+\>", "Text",ExpressionUUID->"6335e3a7-d802-4343-9856-59f2b12103b4"],
+
+Cell["\<\
+SetDirectory[NotebookDirectory[]];
+Get[FileNameJoin[{Directory[], \"src\", \"GeneralizedCD.wl\"}]];
+Needs[\"Wolfram`QuantumFramework`\"];
+Needs[\"Wolfram`QuantumFramework`SecondQuantization`\"];
+GeneralizedCD`GCDSetFockSize[60];\
+\>", "Input",ExpressionUUID->"274689c3-5e96-0146-85c1-add0df19ffb3"],
+
+Cell["\<\
+(* Wolfram QF cross-check: paclet displacement matches the package, deviation \
+~ 0 *)
+GeneralizedCD`ValidateWolframIntegration[]\
+\>", "Input",ExpressionUUID->"741cedf2-36f7-fb48-89f9-a49d6ea085e1"],
+
+Cell["2. The generalized CD operator (Eq. 2)", "Section",ExpressionUUID->"f1c0b5e3-5a78-c149-819e-316291e26f53"],
+
+Cell["\<\
+CD_d(alpha) = Sum_{s=0}^{d-1} |s><s| (x) D(alpha omega_d^s),  omega_d = Exp[i \
+2 Pi/d]. It is unitary and reduces to the standard qubit conditional \
+displacement (Eq. 1) for d = 2.\
+\>", "Text",ExpressionUUID->"e1cb04df-b69c-8544-92f9-181ac7182669"],
+
+Cell["\<\
+cd4 = GeneralizedCD`GeneralizedCD[4, 0.6 + 0.2 I];
+{Dimensions[cd4], Max[Abs[ConjugateTranspose[cd4].cd4 - \
+IdentityMatrix[Length[cd4]]]]}\
+\>", "Input",ExpressionUUID->"22073140-9cd4-2b4e-a801-b9467b3c7623"],
+
+Cell["\<\
+(* d = 2 reproduces Eq. 1 exactly *)
+id = IdentityMatrix[GeneralizedCD`GCDFockSize[]];
+Max[Abs[GeneralizedCD`GeneralizedCD[2, 0.7] - \
+ArrayFlatten[{{GeneralizedCD`Displacement[0.7], 0 id}, {0 id, \
+GeneralizedCD`Displacement[-0.7]}}]]]\
+\>", "Input",ExpressionUUID->"bf379ffc-9e54-8545-bebe-ef270f29a440"],
+
+Cell["3. d-legged cat states and their Wigner functions (Fig. 1c)", "Section",ExpressionUUID->"0a7cc841-2d84-2143-90c3-493e1ac77efc"],
+
+Cell["\<\
+Applying CD_d to |m=0> (x) |vacuum> and measuring the ancilla in the Xbar_d \
+basis leaves the oscillator in the d-legged cat state |C_d^m(alpha)> (Eq. 3). \
+The Wigner functions show d-fold rotational symmetry with quantum \
+interference fringes.\
+\>", "Text",ExpressionUUID->"59743e43-577a-b14a-9c3f-fb12aa686bdb"],
+
+Cell["\<\
+catWig[d_, alpha_, max_, np_] := Module[{psi = \
+GeneralizedCD`LeggedCatState[d, 0, alpha], st = 2. max/np},
+  ListDensityPlot[Table[GeneralizedCD`WignerFunction[psi, x, p], {p, max, \
+-max, -st}, {x, -max, max, st}],
+   DataRange -> {{-max, max}, {-max, max}}, ColorFunction -> \"TemperatureMap\
+\",
+   InterpolationOrder -> 2, Frame -> True, FrameLabel -> {\"q\", \"p\"},
+   PlotLabel -> Row[{\"d = \", d, \" cat\"}], ImageSize -> 260]];\
+\>", "Input",ExpressionUUID->"dfc93551-f077-954f-b59b-074636b22600"],
+
+Cell["\<\
+GeneralizedCD`GCDSetFockSize[36];
+Grid[{{catWig[2, 2.2, 5, 40], catWig[3, 2.2, 5, 40]}, {catWig[4, 2.2, 5, 40], \
+catWig[6, 2.6, 5.5, 40]}}]\
+\>", "Input",ExpressionUUID->"f7d500e9-063c-f047-adc4-8ace9c396de4"],
+
+Cell["\<\
+Interactive explorer: adjust the number of legs d and the amplitude alpha.\
+\>", "Text",ExpressionUUID->"7a9068a7-abfb-5e4a-93f2-bc3336bca3e4"],
+
+Cell["\<\
+Manipulate[catWig[d, alpha, 5.5, 34], {{d, 4, \"legs d\"}, 2, 6, 1}, {{alpha, \
+2.0, \"amplitude alpha\"}, 1.0, 3.0, 0.25}]\
+\>", "Input",ExpressionUUID->"28ef9690-3265-2e4a-925d-29e7cc09d754"],
+
+Cell["4. Cat creation by measurement (Eqs. 5, 6)", "Section",ExpressionUUID->"975f28ed-9493-2f46-a2f3-d2d9d9708c2e"],
+
+Cell["\<\
+Projecting the ancilla onto |m> yields exactly |C_d^m(alpha)>. Fidelity \
+should be 1.\
+\>", "Text",ExpressionUUID->"3e3fc4d5-b0ee-ad45-bf33-be169666e300"],
+
+Cell["\<\
+GeneralizedCD`GCDSetFockSize[50];
+With[{d = 4, alpha = 2.0},
+ Table[Module[{psi, proj, osc, nf = GeneralizedCD`GCDFockSize[]},
+   psi = GeneralizedCD`GeneralizedCD[d, alpha] . Flatten[Outer[Times, \
+GeneralizedCD`QuditXEigenstate[d, 0], GeneralizedCD`Vacuum[]]];
+   proj = ArrayFlatten[{Table[Conjugate[GeneralizedCD`QuditXEigenstate[d, \
+m][[s + 1]]] IdentityMatrix[nf], {s, 0, d - 1}]}];
+   osc = proj . psi;
+   m -> Abs[Conjugate[GeneralizedCD`LeggedCatState[d, m, alpha]] . \
+(osc/Norm[osc])]^2], {m, 0, d - 1}]]\
+\>", "Input",ExpressionUUID->"7d5dd277-c98c-4e49-ad85-4305bbd5ad97"],
+
+Cell["5. GKP stabilizer Kraus operators (Eqs. 8-11)", "Section",ExpressionUUID->"2a441291-5c8f-2049-9c07-fea705d66dbe"],
+
+Cell["\<\
+The d = 4 stabilizer Kraus operator M_j(beta) has three equivalent forms: the \
+definition <j|CD_4(e^{i pi/4} sqrt2 beta)|m=0> (Eq. 8), Eq. 9, and Eq. 10. \
+They agree exactly, satisfy POVM completeness, and the |j> basis diagonalizes \
+the Hermitian observable of Eq. 11.\
+\>", "Text",ExpressionUUID->"51b713e2-fcf4-3a40-9293-f17f074d1bc0"],
+
+Cell["\<\
+beta = Sqrt[Pi]/Sqrt[2];
+{
+ \"Eq9 vs Eq10\" -> \
+Chop@Max[Table[Max[Abs[GeneralizedCD`QuditStabilizerKraus[j, beta] - \
+GeneralizedCD`QuditStabilizerKrausEq10[j]]], {j, 0, 3}]],
+ \"POVM sum - I\" -> \
+Chop@Max[Abs[Sum[ConjugateTranspose[GeneralizedCD`QuditStabilizerKraus[j, \
+beta]].GeneralizedCD`QuditStabilizerKraus[j, beta], {j, 0, 3}] - \
+IdentityMatrix[GeneralizedCD`GCDFockSize[]]]]
+}\
+\>", "Input",ExpressionUUID->"865e3338-f808-c74b-8503-2ea237e90add"],
+
+Cell["\<\
+(* Eq. 11 is Hermitian and the |j> basis are its eigenvectors *)
+H11 = GeneralizedCD`QuditHermitianObservable[];
+{\"Hermitian\" -> (H11 == ConjugateTranspose[H11]), \"eigenvalues\" -> \
+Chop[Eigenvalues[N[H11]]],
+ \"eigen-residuals\" -> Table[Module[{v = GeneralizedCD`QuditMeasBasis[j, \
+beta], hv}, hv = H11.v; Chop[Norm[hv - (Conjugate[v].hv/(Conjugate[v].v)) \
+v]]], {j, 0, 3}]}\
+\>", "Input",ExpressionUUID->"4aec8e8c-bcbb-3a4e-837c-7effb503d196"],
+
+Cell["6. GKP stabilization from vacuum (Fig. 2d)", "Section",ExpressionUUID->"03bae3fb-fdbf-604f-b9aa-38792b3433b8"],
+
+Cell["\<\
+The qudit d = 4 sharpen-trim protocol drives the vacuum toward the GKP \
+manifold. Because a single CD_4 addresses both quadratures, one qudit round \
+costs 2 CD operations vs 4 for the qubit protocol, and the qudit reaches a \
+target <S> at fewer CD operations.\
+\>", "Text",ExpressionUUID->"8cc36c41-9142-a541-93c2-21d6e8ad75a3"],
+
+Cell["\<\
+GeneralizedCD`GCDSetFockSize[70];
+qud = GeneralizedCD`RunQuditStabilization[30];
+ListLinePlot[{{#[[1]], (#[[2]] + #[[3]])/2} & /@ qud, {#[[1]], #[[4]]/20.} & \
+/@ qud},
+ PlotStyle -> {Red, Gray}, Frame -> True, PlotRange -> {0, 1},
+ FrameLabel -> {\"number of CD operations\", \"value\"},
+ PlotLegends -> {\"<S> (qudit sharpen+trim)\", \"<n>/20 (bounded energy)\"}, \
+ImageSize -> 520]\
+\>", "Input",ExpressionUUID->"c0881885-17e7-1f40-a17a-16edf33ca5fb"],
+
+Cell["\<\
+(* Per-CD efficiency: qudit (1 CD/round, both quadratures) vs qubit (2 \
+CD/round) *)
+qs = GeneralizedCD`RunQuditSharpen[14]; qb = GeneralizedCD`RunQubitSharpen[10];
+ListLinePlot[{{#[[1]], (#[[2]] + #[[3]])/2} & /@ qs, {#[[1]], (#[[2]] + \
+#[[3]])/2} & /@ qb},
+ PlotMarkers -> Automatic, Frame -> True, PlotRange -> {{0, 16}, {0, 0.75}},
+ FrameLabel -> {\"number of CD operations\", \"<S>\"},
+ PlotLegends -> {\"qudit d=4 sharpen\", \"qubit d=2 sharpen\"}, ImageSize -> \
+520]\
+\>", "Input",ExpressionUUID->"93091195-a0ee-a14b-a316-e5f7ee7ce538"],
+
+Cell["7. Ideal physical implementation: planar rotor (Eq. 17)", "Section",ExpressionUUID->"d784f3ce-76a8-df47-91d6-1a7265bad430"],
+
+Cell["\<\
+With rotor-GKP logical states |s> = |theta = 2 Pi s/d>, the phase operator \
+e^{i theta} acts as Zbar_d, so the rotor conditional displacement D(alpha \
+e^{i theta}) equals CD_d(alpha) exactly (Eq. 17). Residual should be 0.\
+\>", "Text",ExpressionUUID->"74910aec-026d-da47-809c-ef9b93da63d0"],
+
+Cell["\<\
+GeneralizedCD`GCDSetFockSize[50];
+Table[d -> GeneralizedCD`RotorCDIdentityResidual[d, 1.3 + 0.2 I], {d, {2, 3, \
+4, 6}}]\
+\>", "Input",ExpressionUUID->"0afcc87a-13f4-c241-bd42-d430a47565f7"],
+
+Cell["\<\
+The harmonic-oscillator cat-code (beam splitter, Eq. 19) and the spin / \
+Tavis-Cummings (Eq. 22) implementations approximate CD_d with fidelity \
+approaching 1 as the encoding size grows (Fig. 4); those are documented as \
+extensions in docs/plain_english_proof.md.\
+\>", "Text",ExpressionUUID->"fc4957f6-4f60-d84b-8766-e61628f85473"],
+
+Cell["8. Full validation suite and key findings", "Section",ExpressionUUID->"8c6379eb-a66d-a947-bca6-7ff97a9ddf8a"],
+
+Cell["\<\
+GeneralizedCD`GCDSetFockSize[70];
+GeneralizedCD`RunValidationSuite[] // Dataset\
+\>", "Input",ExpressionUUID->"a83e7b51-3239-004d-b8b2-c344ac59297e"],
+
+Cell["\<\
+KEY FINDINGS (numerical):
+ - CD_d(alpha) is unitary to < 1e-15 and reduces to Eq. 1 for d = 2 (residual \
+0).
+ - d-legged cat creation fidelity = 1 (to < 1e-6) for d = 2, 4 and m = 0..3.
+ - Eq. 8 = Eq. 9 = Eq. 10 exactly; POVM completeness exact; |j> are exact \
+eigenvectors of Eq. 11.
+ - Qudit sharpen-trim converges to <S_x> = <S_z> ~ 0.80 with bounded <n> ~ \
+15.
+ - Qudit reaches <S> = 0.5 in ~6-7 CD operations vs ~10 for the qubit protocol.
+ - Ideal rotor implementation D(alpha Zbar_d) = CD_d(alpha) exactly (residual \
+0).
+ - Package displacement matches Wolfram QF DisplacementOperator (deviation 0).\
+\>", "Text",ExpressionUUID->"84d22e2d-f67a-3e45-a8b8-48a519431f07"],
+
+Cell["\<\
+See README.md for how to run build_project.wls (regenerates all figures and \
+reports in exports/) and proof_audit.wls (48 checks). See \
+docs/plain_english_proof.md for the derivations and docs/references.md for \
+citations.\
+\>", "Text",ExpressionUUID->"e023ec03-0931-954a-8fa4-71982dd2812a"]
+},
+WindowSize->{900, 720},
+FrontEndVersion->"14.3 for Microsoft Windows (64-bit) (July 8, 2025)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"2995dc4d-4d5b-d14b-99be-58c6a6ba56e6"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[554, 20, 108, 0, 70, "Title",ExpressionUUID->"ceccaf73-8a45-9243-a0a2-640fbe786cdb"],
+Cell[665, 22, 128, 0, 70, "Subtitle",ExpressionUUID->"ceec44f7-e7d0-1248-9cf7-fbf5515bf5f1"],
+Cell[796, 24, 230, 3, 70, "Text",ExpressionUUID->"cf66da4d-f5bd-0b40-a5db-4968a49e7fe7"],
+Cell[1029, 29, 588, 9, 70, "Text",ExpressionUUID->"4ecc9709-5467-0849-8f2a-fb4e8c0cc82b"],
+Cell[1620, 40, 173, 3, 70, "Text",ExpressionUUID->"6d88b9be-ce2e-4440-9a46-d9c80b934a82"],
+Cell[1796, 45, 127, 0, 70, "Section",ExpressionUUID->"2353c623-8cc1-984b-a349-39ecc8560971"],
+Cell[1926, 47, 244, 4, 70, "Text",ExpressionUUID->"6335e3a7-d802-4343-9856-59f2b12103b4"],
+Cell[2173, 53, 308, 6, 70, "Input",ExpressionUUID->"274689c3-5e96-0146-85c1-add0df19ffb3"],
+Cell[2484, 61, 209, 4, 70, "Input",ExpressionUUID->"741cedf2-36f7-fb48-89f9-a49d6ea085e1"],
+Cell[2696, 67, 112, 0, 70, "Section",ExpressionUUID->"f1c0b5e3-5a78-c149-819e-316291e26f53"],
+Cell[2811, 69, 261, 4, 70, "Text",ExpressionUUID->"e1cb04df-b69c-8544-92f9-181ac7182669"],
+Cell[3075, 75, 219, 4, 70, "Input",ExpressionUUID->"22073140-9cd4-2b4e-a801-b9467b3c7623"],
+Cell[3297, 81, 316, 6, 70, "Input",ExpressionUUID->"bf379ffc-9e54-8545-bebe-ef270f29a440"],
+Cell[3616, 89, 133, 0, 70, "Section",ExpressionUUID->"0a7cc841-2d84-2143-90c3-493e1ac77efc"],
+Cell[3752, 91, 326, 5, 70, "Text",ExpressionUUID->"59743e43-577a-b14a-9c3f-fb12aa686bdb"],
+Cell[4081, 98, 519, 9, 70, "Input",ExpressionUUID->"dfc93551-f077-954f-b59b-074636b22600"],
+Cell[4603, 109, 220, 4, 70, "Input",ExpressionUUID->"f7d500e9-063c-f047-adc4-8ace9c396de4"],
+Cell[4826, 115, 153, 2, 70, "Text",ExpressionUUID->"7a9068a7-abfb-5e4a-93f2-bc3336bca3e4"],
+Cell[4982, 119, 203, 3, 70, "Input",ExpressionUUID->"28ef9690-3265-2e4a-925d-29e7cc09d754"],
+Cell[5188, 124, 116, 0, 70, "Section",ExpressionUUID->"975f28ed-9493-2f46-a2f3-d2d9d9708c2e"],
+Cell[5307, 126, 165, 3, 70, "Text",ExpressionUUID->"3e3fc4d5-b0ee-ad45-bf33-be169666e300"],
+Cell[5475, 131, 596, 11, 70, "Input",ExpressionUUID->"7d5dd277-c98c-4e49-ad85-4305bbd5ad97"],
+Cell[6074, 144, 119, 0, 70, "Section",ExpressionUUID->"2a441291-5c8f-2049-9c07-fea705d66dbe"],
+Cell[6196, 146, 351, 5, 70, "Text",ExpressionUUID->"51b713e2-fcf4-3a40-9293-f17f074d1bc0"],
+Cell[6550, 153, 471, 11, 70, "Input",ExpressionUUID->"865e3338-f808-c74b-8503-2ea237e90add"],
+Cell[7024, 166, 462, 8, 70, "Input",ExpressionUUID->"4aec8e8c-bcbb-3a4e-837c-7effb503d196"],
+Cell[7489, 176, 116, 0, 70, "Section",ExpressionUUID->"03bae3fb-fdbf-604f-b9aa-38792b3433b8"],
+Cell[7608, 178, 341, 5, 70, "Text",ExpressionUUID->"8cc36c41-9142-a541-93c2-21d6e8ad75a3"],
+Cell[7952, 185, 465, 9, 70, "Input",ExpressionUUID->"c0881885-17e7-1f40-a17a-16edf33ca5fb"],
+Cell[8420, 196, 556, 10, 70, "Input",ExpressionUUID->"93091195-a0ee-a14b-a316-e5f7ee7ce538"],
+Cell[8979, 208, 129, 0, 70, "Section",ExpressionUUID->"d784f3ce-76a8-df47-91d6-1a7265bad430"],
+Cell[9111, 210, 303, 4, 70, "Text",ExpressionUUID->"74910aec-026d-da47-809c-ef9b93da63d0"],
+Cell[9417, 216, 200, 4, 70, "Input",ExpressionUUID->"0afcc87a-13f4-c241-bd42-d430a47565f7"],
+Cell[9620, 222, 345, 5, 70, "Text",ExpressionUUID->"fc4957f6-4f60-d84b-8766-e61628f85473"],
+Cell[9968, 229, 115, 0, 70, "Section",ExpressionUUID->"8c6379eb-a66d-a947-bca6-7ff97a9ddf8a"],
+Cell[10086, 231, 159, 3, 70, "Input",ExpressionUUID->"a83e7b51-3239-004d-b8b2-c344ac59297e"],
+Cell[10248, 236, 689, 13, 70, "Text",ExpressionUUID->"84d22e2d-f67a-3e45-a8b8-48a519431f07"],
+Cell[10940, 251, 304, 5, 70, "Text",ExpressionUUID->"e023ec03-0931-954a-8fa4-71982dd2812a"]
+}
+]
+*)
+
+(* End of internal cache information *)

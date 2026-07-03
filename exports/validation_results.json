@@ -1,0 +1,13 @@
+{
+	"CD_unitary_d4":1.7763568394002505e-15,
+	"CD_reduces_to_CD2":0.0,
+	"Eq9_equals_Eq10":0,
+	"POVM_completeness":0,
+	"Eq11_eigenvectors":0,
+	"CatCreation_fidelity_min":0.9999999999999998,
+	"Rotor_identity_residual":0,
+	"Wolfram_integration":{
+		"Available":true,
+		"MaxDeviation":0
+	}
+}

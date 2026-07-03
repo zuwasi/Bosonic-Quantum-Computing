@@ -1,0 +1,8 @@
+# OS
+Thumbs.db
+.DS_Store
+
+# Wolfram / editor artifacts
+*.mx
+*~
+*.nb.bak
