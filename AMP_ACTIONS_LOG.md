@@ -172,6 +172,53 @@ Classiq account (`classiq.authenticate()`).
 
 ---
 
+## Prompt 4
+
+> "[Classiq] synthesize is not available on the free plan ... use alternative as
+> you said — build the circuit from the CD unitary (UnitaryGate), transpile to
+> basis gates and report gate counts + depth, run it on Qiskit's local
+> statevector simulator ... verify the output equals the d-legged cat
+> (fidelity ~1), optionally export OpenQASM ... keep Classiq as an option for
+> later."
+
+### Context
+
+- The user's `classiq.authenticate()` succeeded (`Authenticated: True`,
+  `User ID: github|190716959`), but `synthesize()` returned
+  **`403 User is not authorized`**. In the Classiq Studio the user confirmed
+  **synthesis is not available on the free plan** — a pricing gate, not a code
+  or account bug. The user contacted Classiq for an upgrade and asked for the
+  free local alternative in the meantime.
+
+### Actions (prompt → results)
+
+1. **Installed Qiskit 2.5.0** on Python 3.12.
+2. **Wrote `classiq/qiskit_cd_demo.py`**, reusing the exact same `CD_d(α)`
+   unitary from `cd_builder.py`:
+   - builds a gate circuit from the CD unitary (`QuantumCircuit.unitary`),
+   - transpiles to basis gates `{cx, u}` (`optimization_level=3`),
+   - runs Qiskit's **local statevector simulator**: prepares `|m=0>⊗|0>`,
+     applies `CD_d`, and verifies the output against the analytic d‑legged cat,
+   - exports **OpenQASM 3**.
+3. **Ran it — end‑to‑end success:**
+   - transpiled circuit: **depth 215, gates {u:184, cx:112} (total 296)**,
+   - ordering cross‑check `max|sv − CD·init| = 5.55e-17` (circuit == numpy ref),
+   - **cat fidelity = 1.000000 for all m = 0..3**,
+   - wrote `generalized_cd_qiskit.qasm` (OpenQASM 3, 112 `cx` + 184 `U`),
+   - `RESULT: REAL + RUNNABLE - circuit reproduces the cat`.
+4. **Left the Classiq artifacts untouched** (`.qmod` files remain ready for when
+   the user's plan permits synthesis) and updated `classiq/README.md`,
+   `classiq/requirements.txt`, and the main `README.md`.
+
+### Result of Prompt 4
+
+The generalized conditional displacement is now **proven real and runnable
+end‑to‑end, for free and fully locally**: a transpiled Qiskit gate circuit
+reproduces the d‑legged cat at fidelity 1.0 and is exported to portable
+OpenQASM 3. Classiq remains a drop‑in option once synthesis access is granted.
+
+---
+
 ## Notes
 
 - The MIT license applies to the **reproduction code and documentation** in this

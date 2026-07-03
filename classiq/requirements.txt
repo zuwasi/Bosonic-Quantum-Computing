@@ -1,2 +1,8 @@
+# Shared core + verification (both demos)
 numpy>=1.24
+
+# Classiq demo (classiq_cd_demo.py) - synthesis needs a Classiq account/plan
 classiq>=1.19,<2
+
+# Qiskit demo (qiskit_cd_demo.py) - free, local, no account
+qiskit>=1.0

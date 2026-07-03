@@ -29,9 +29,10 @@ Bosonic Quantum Computing/
 ├── docs/
 │   ├── plain_english_proof.md  derivations in plain English
 │   └── references.md           citations
-├── classiq/                    Classiq (Qmod) port of the unitary core
-│   ├── cd_builder.py           numpy build + verification of CD_d(α)
+├── classiq/                    gate-based ports of the unitary core
+│   ├── cd_builder.py           numpy build + verification of CD_d(α) (shared)
 │   ├── classiq_cd_demo.py      Qmod models (CD_d, cat prep) + synthesis
+│   ├── qiskit_cd_demo.py       free local gate circuit + statevector run + QASM
 │   └── README.md               scope, run steps, what runs local vs cloud
 ├── AMP_ACTIONS_LOG.md          full log of Amp actions from prompt to results
 └── LICENSE                     MIT
