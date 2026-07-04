@@ -137,8 +137,30 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
   background:var(--grad);box-shadow:0 0 24px rgba(168,85,247,.8)}
 .spin{animation:spin 14s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 
+/* welcome logo lockup */
+.lockup{display:flex;align-items:center;justify-content:center;gap:clamp(1rem,4vw,2.8rem);flex-wrap:wrap;margin-top:.5rem}
+.esl-block{display:flex;flex-direction:column;align-items:center;gap:.55rem}
+.logo-esl{height:clamp(72px,12vw,128px);width:auto;max-width:min(90vw,420px);object-fit:contain;display:block;
+  border-radius:12px;border:1px solid var(--line);box-shadow:0 14px 40px rgba(0,0,0,.55)}
+.esl-caption{font-size:clamp(11px,1.4vw,14px);color:var(--dim);line-height:1.45;max-width:36ch;text-align:center}
+.esl-caption strong{color:#fff}
+.partner-x{font-size:clamp(15px,2.2vw,24px);color:var(--faint);font-weight:300}
+.wolf-card{background:#eef0f4;border-radius:14px;padding:clamp(.5rem,1.4vw,.85rem) clamp(.85rem,2.1vw,1.35rem);
+  display:flex;align-items:center;box-shadow:0 12px 36px rgba(0,0,0,.5)}
+.logo-wolf{height:clamp(24px,3.4vw,42px);width:auto;display:block}
+
+/* outline / agenda */
+.outline{display:grid;grid-template-columns:1fr 1fr;gap:clamp(.5rem,1.3vw,.95rem);width:100%}
+.oitem{display:flex;align-items:center;justify-content:space-between;gap:.9rem;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:clamp(.5rem,1.25vw,.8rem) clamp(.7rem,1.6vw,1.05rem)}
+.oitem .t{font-weight:600;font-size:clamp(12px,1.5vw,16px);line-height:1.2}
+.oitem .t small{display:block;color:var(--dim);font-weight:400;font-size:.8em;margin-top:.15rem;line-height:1.3}
+.oitem .pg{font-family:'JetBrains Mono',monospace;color:var(--cyan);font-size:clamp(11px,1.35vw,14.5px);
+  white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:.16rem .6rem;background:rgba(34,211,238,.06)}
+
 @media (max-width:760px){
-  .grid2,.grid3{grid-template-columns:1fr}
+  .grid2,.grid3,.outline{grid-template-columns:1fr}
   .fig{max-height:42vh}
   .refs{columns:1}
   .flow{gap:.4rem}
@@ -154,7 +176,23 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
 
 <div class="track" id="track">
 
-  <!-- 1 TITLE -->
+  <!-- 1 WELCOME -->
+  <section class="slide"><div class="inner center">
+    <div class="kicker">Welcome to our presentation</div>
+    <h1><span class="gr">Generalized Conditional Displacement</span></h1>
+    <p class="lead">From a research paper to <strong>runnable synthesis</strong> — using <strong>Wolfram Mathematica</strong> &amp; <strong>OpenQASM</strong>.</p>
+    <p class="dim">One operator from a cutting-edge bosonic-QEC paper — reproduced, verified, and turned into a working, runnable quantum function on two backends.</p>
+    <div class="lockup">
+      <div class="esl-block">
+        <img class="logo-esl" src="assets/esl-logo.png" alt="ESL — Engineering Software Lab">
+        <p class="esl-caption">ESL — the Israeli representatives of <strong>Wolfram Research</strong> (makers of Mathematica)<br><a href="https://eswlab.com/contact-us/" target="_blank">eswlab.com/contact-us</a></p>
+      </div>
+      <div class="partner-x">×</div>
+      <div class="wolf-card"><img class="logo-wolf" src="assets/wolfram-logo.png" alt="Wolfram"></div>
+    </div>
+  </div></section>
+
+  <!-- 2 TITLE -->
   <section class="slide"><div class="inner center">
     <div class="atom spin"><i></i><i></i><i></i><span class="nuc"></span></div>
     <div class="kicker">Bosonic quantum computing · arXiv:2405.09977</div>
@@ -164,7 +202,24 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="foot">An AI-agent engineering pipeline · single-mode CV physics → discrete-variable circuits</p>
   </div></section>
 
-  <!-- 2 THESIS -->
+  <!-- 3 OUTLINE -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Agenda</div>
+    <h2>What we&rsquo;ll cover</h2>
+    <div class="outline">
+      <div class="oitem"><div class="t">Opening &amp; agenda<small>Welcome · title · this outline</small></div><div class="pg">1&ndash;3</div></div>
+      <div class="oitem"><div class="t">The paper &amp; the operator<small>Thesis · arXiv:2405.09977 · CD&#8322;&nbsp;&rarr;&nbsp;CD_d · deliverables</small></div><div class="pg">4&ndash;9</div></div>
+      <div class="oitem"><div class="t">Wolfram reproduction pipeline<small>QuantumFramework · .wl / .wls / .nb · package &amp; notebook</small></div><div class="pg">10&ndash;16</div></div>
+      <div class="oitem"><div class="t">Verification &amp; results<small>48-check validation suite + audit</small></div><div class="pg">17&ndash;18</div></div>
+      <div class="oitem"><div class="t">Reproduced figures &amp; exports<small>Figs 1c, 2d, 4 · the exports/ folder</small></div><div class="pg">19&ndash;22</div></div>
+      <div class="oitem"><div class="t">From CV physics to a circuit<small>What we synthesize · CV&nbsp;&rarr;&nbsp;qubit encoding</small></div><div class="pg">23&ndash;24</div></div>
+      <div class="oitem"><div class="t">Two runnable backends<small>Classiq · Qiskit · results · OpenQASM&nbsp;3</small></div><div class="pg">25&ndash;29</div></div>
+      <div class="oitem"><div class="t">Repository &amp; provenance<small>Repo structure · commit history</small></div><div class="pg">30&ndash;31</div></div>
+      <div class="oitem"><div class="t">Caveat, impact &amp; references<small>Honest claim · what it proves · links · close</small></div><div class="pg">32&ndash;35</div></div>
+    </div>
+  </div></section>
+
+  <!-- 4 THESIS -->
   <section class="slide"><div class="inner">
     <div class="kicker">The claim, stated honestly</div>
     <h2>One item from the paper, taken all the way to a working function</h2>
@@ -183,7 +238,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     </div>
   </div></section>
 
-  <!-- 3 THE PAPER -->
+  <!-- 5 THE PAPER -->
   <section class="slide"><div class="inner">
     <div class="kicker">The source</div>
     <h2>“Generalized Conditional Displacement”</h2>
@@ -199,7 +254,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="lead">The abstract: a CD conditioned on a qudit “operates simultaneously on both symmetry axes of the GKP grid”, enabling <strong>more efficient stabilization and creation of GKP states</strong>.</p>
   </div></section>
 
-  <!-- 4 WHY IT MATTERS -->
+  <!-- 6 WHY IT MATTERS -->
   <section class="slide"><div class="inner">
     <div class="kicker">Background · why oscillators</div>
     <h2>Continuous-variable quantum error correction</h2>
@@ -211,7 +266,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="lead">The workhorse of this whole field is <strong>one gate</strong>: conditional displacement — it controls, measures, and stabilizes GKP states. <a href="https://doi.org/10.1103/PhysRevA.64.012310" target="_blank">GKP, PRA 64, 012310 (2001)</a></p>
   </div></section>
 
-  <!-- 5 CD2 -->
+  <!-- 7 CD2 -->
   <section class="slide"><div class="inner">
     <div class="kicker">The building block</div>
     <h2>Conditional displacement — the “Swiss-army knife”</h2>
@@ -226,7 +281,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     </div>
   </div></section>
 
-  <!-- 6 CDd -->
+  <!-- 8 CDd -->
   <section class="slide"><div class="inner">
     <div class="kicker">The generalization · Eq. 2</div>
     <h2>Qudit conditional displacement <span class="gr">CD_d(α)</span></h2>
@@ -241,7 +296,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="lead">The qudit's larger Hilbert space = extra degrees of freedom to “gain information faster with fewer operations.”</p>
   </div></section>
 
-  <!-- 7 WHAT PAPER DELIVERS -->
+  <!-- 9 WHAT PAPER DELIVERS -->
   <section class="slide"><div class="inner">
     <div class="kicker">What the paper delivers</div>
     <h2>Five results we reproduced</h2>
@@ -255,7 +310,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     </div>
   </div></section>
 
-  <!-- 8 PIPELINE OVERVIEW -->
+  <!-- 10 PIPELINE OVERVIEW -->
   <section class="slide"><div class="inner center">
     <div class="kicker">The end-to-end pipeline</div>
     <h2>From PDF to a running circuit</h2>
@@ -269,7 +324,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     </div>
   </div></section>
 
-  <!-- 9 PHASE 1 -->
+  <!-- 11 PHASE 1 -->
   <section class="slide"><div class="inner">
     <div class="kicker">Mathematica phase 1</div>
     <h2>Ingesting &amp; understanding the paper</h2>
@@ -286,7 +341,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="dim">A deliberate scoping note was preserved: the exact finite-energy qubit <em>trim</em> feedback lives in the paper's supplementary material (not in this PDF), so it was reconstructed from the main text and verified by convergence.</p>
   </div></section>
 
-  <!-- 10 WOLFRAM FOR QC -->
+  <!-- 12 WOLFRAM FOR QC -->
   <section class="slide"><div class="inner">
     <div class="kicker">Mathematica phase 2 · what Wolfram has for quantum computing</div>
     <h2>The Wolfram <span class="gr">Quantum Framework</span></h2>
@@ -300,7 +355,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
       <p>We verified our displacement against the paclet: <code>DisplacementOperator[α,"Ordering"→"Weak"]</code> equals <code>MatrixExp[α a† − α* a]</code> to <strong>deviation 0</strong>. Physics grounded in the vendor's own tooling.</p></div>
   </div></section>
 
-  <!-- 11 WHY WL/WLS not NB -->
+  <!-- 13 WHY WL/WLS not NB -->
   <section class="slide"><div class="inner">
     <div class="kicker">Architecture decision</div>
     <h2>Why <span class="gr">.wl</span> + <span class="gr">.wls</span>, not just <span class="gr">.nb</span></h2>
@@ -318,7 +373,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="dim">Separation of concerns = reproducibility. The same verified library feeds the notebook, the automated build, and later the circuit exports.</p>
   </div></section>
 
-  <!-- 12 PACKAGE STRUCTURE -->
+  <!-- 14 PACKAGE STRUCTURE -->
   <section class="slide"><div class="inner">
     <div class="kicker">src/GeneralizedCD.wl</div>
     <h2>The package: one API, grouped by physics</h2>
@@ -331,7 +386,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="dim">Every exported symbol carries a <code>::usage</code> message tied to a paper equation.</p>
   </div></section>
 
-  <!-- 13 KEY DECISIONS -->
+  <!-- 15 KEY DECISIONS -->
   <section class="slide"><div class="inner">
     <div class="kicker">Subtle physics &amp; engineering</div>
     <h2>Three decisions that make it correct</h2>
@@ -343,7 +398,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="lead">Fock truncation = <strong>80</strong> levels for publication-quality results.</p>
   </div></section>
 
-  <!-- 14 NOTEBOOK STRUCTURE -->
+  <!-- 16 NOTEBOOK STRUCTURE -->
   <section class="slide"><div class="inner">
     <div class="kicker">GeneralizedCD.nb · 38 cells (8 sections)</div>
     <h2>What the notebook walks through</h2>
@@ -366,7 +421,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="dim">Title · Subtitle · 8 Section · 14 Text · 14 Input cells — including interactive <code>Manipulate</code> explorers for legs <span class="mono">d</span> and amplitude <span class="mono">α</span>. Every input cell verified to evaluate end-to-end.</p>
   </div></section>
 
-  <!-- 15 RESULTS TABLE -->
+  <!-- 17 RESULTS TABLE -->
   <section class="slide"><div class="inner">
     <div class="kicker">Results · RunValidationSuite[] · Fock = 80</div>
     <h2>Everything checks out — to machine precision</h2>
@@ -383,7 +438,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     </table>
   </div></section>
 
-  <!-- 16 AUDIT -->
+  <!-- 18 AUDIT -->
   <section class="slide"><div class="inner center">
     <div class="kicker">proof_audit.wls · independent checks</div>
     <h2>A second, independent audit</h2>
@@ -395,7 +450,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="lead">The 3 warnings are transcription/convention notes (e.g. a shared <span class="mono">e^{iπ/4}</span> phase omitted in the Eq. 10 print, an OCR artifact in a trim exponent) — <strong>not</strong> core failures. Eqs. 8/9/10 are independently verified exact.</p>
   </div></section>
 
-  <!-- 17 FIG 1c -->
+  <!-- 19 FIG 1c -->
   <section class="slide"><div class="inner center">
     <div class="kicker">Figure 1c · reproduced</div>
     <h2>d-legged cat states in phase space</h2>
@@ -405,7 +460,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     </div>
   </div></section>
 
-  <!-- 18 FIG 2d -->
+  <!-- 20 FIG 2d -->
   <section class="slide"><div class="inner center">
     <div class="kicker">Figure 2d · the efficiency result</div>
     <h2>GKP stabilization from vacuum</h2>
@@ -415,7 +470,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     </div>
   </div></section>
 
-  <!-- 19 FIG 4 -->
+  <!-- 21 FIG 4 -->
   <section class="slide"><div class="inner center">
     <div class="kicker">Figure 4 · ideal implementation</div>
     <h2>Ideal CD₄ 4-legged cat</h2>
@@ -425,7 +480,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     </div>
   </div></section>
 
-  <!-- 20 EXPORTS -->
+  <!-- 22 EXPORTS -->
   <section class="slide"><div class="inner">
     <div class="kicker">C:\…\Bosonic Quantum Computing\exports</div>
     <h2>Every artifact, and what it means</h2>
@@ -442,7 +497,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="dim">All regenerated in one command: <code>wolframscript -file build_project.wls</code> → “BUILD OK”.</p>
   </div></section>
 
-  <!-- 21 WHAT WE SYNTHESIZE -->
+  <!-- 23 WHAT WE SYNTHESIZE -->
   <section class="slide"><div class="inner">
     <div class="kicker">From model to circuit · the scoping decision</div>
     <h2>What we chose to synthesize — and why</h2>
@@ -459,7 +514,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     </div>
   </div></section>
 
-  <!-- 22 ENCODING -->
+  <!-- 24 ENCODING -->
   <section class="slide"><div class="inner">
     <div class="kicker">CV → DV · the encoding</div>
     <h2>From an oscillator to 5 qubits</h2>
@@ -475,7 +530,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     </div>
   </div></section>
 
-  <!-- 23 CLASSIQ -->
+  <!-- 25 CLASSIQ -->
   <section class="slide"><div class="inner">
     <div class="kicker">Backend A · Classiq (Qmod)</div>
     <h2>High-level synthesis</h2>
@@ -493,7 +548,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="dim"><a href="https://github.com/Classiq/classiq-library" target="_blank">Classiq library</a> · <a href="https://docs.classiq.io" target="_blank">docs.classiq.io</a></p>
   </div></section>
 
-  <!-- 24 QISKIT -->
+  <!-- 26 QISKIT -->
   <section class="slide"><div class="inner">
     <div class="kicker">Backend B · Qiskit — free &amp; fully local</div>
     <h2>The runnable path, today</h2>
@@ -506,7 +561,7 @@ pre .c{color:var(--cyan)} pre .v{color:var(--violet)} pre .g{color:#7cf7c4} pre 
     <p class="dim">Both backends import the <strong>same verified core</strong>, <code>cd_builder.py</code> — one physics, two compilers.</p>
   </div></section>
 
-  <!-- 25 QISKIT RESULTS -->
+  <!-- 27 QISKIT RESULTS -->
   <section class="slide"><div class="inner center">
     <div class="kicker">Qiskit results · ran on the machine</div>
     <h2>Real + runnable, end-to-end</h2>
@@ -523,7 +578,7 @@ cat fidelity per m (0..3)             : <span class="g">[1.0, 1.0, 1.0, 1.0]</sp
 RESULT: <span class="g">REAL + RUNNABLE — circuit reproduces the cat</span></pre>
   </div></section>
 
-  <!-- 26 OPENQASM -->
+  <!-- 28 OPENQASM -->
   <section class="slide"><div class="inner">
     <div class="kicker">Portability · generalized_cd_qiskit.qasm</div>
     <h2>Valid <span class="gr">OpenQASM 3</span> — runs anywhere</h2>
@@ -541,7 +596,7 @@ qubit[5] q;
     <p class="dim"><a href="https://openqasm.com" target="_blank">openqasm.com</a> — a hardware-agnostic assembly for quantum circuits.</p>
   </div></section>
 
-  <!-- 27 DUAL BACKEND -->
+  <!-- 29 DUAL BACKEND -->
   <section class="slide"><div class="inner center">
     <div class="kicker">One physics core, two runners</div>
     <h2>Two ways to synthesize / run</h2>
@@ -556,7 +611,7 @@ qubit[5] q;
     <p class="lead">Get an upgrade → <code>python classiq_cd_demo.py</code> synthesizes with <strong>no other changes</strong>.</p>
   </div></section>
 
-  <!-- 28 REPO STRUCTURE -->
+  <!-- 30 REPO STRUCTURE -->
   <section class="slide"><div class="inner">
     <div class="kicker">github.com/zuwasi/Bosonic-Quantum-Computing</div>
     <h2>Repository structure</h2>
@@ -583,7 +638,7 @@ qubit[5] q;
     </div>
   </div></section>
 
-  <!-- 29 COMMITS -->
+  <!-- 31 COMMITS -->
   <section class="slide"><div class="inner">
     <div class="kicker">Traceable history</div>
     <h2>Four commits, one story</h2>
@@ -596,7 +651,7 @@ qubit[5] q;
     <p class="lead"><span class="mono">ffc3f1f</span> is the milestone: <strong>proven real and runnable, free and fully local</strong>.</p>
   </div></section>
 
-  <!-- 30 CAVEAT -->
+  <!-- 32 CAVEAT -->
   <section class="slide"><div class="inner center">
     <div class="kicker">Scientific honesty</div>
     <h2>The caveat — stated precisely</h2>
@@ -607,7 +662,7 @@ qubit[5] q;
     <p class="dim">The accurate — and still impressive — claim: <strong>one item from the paper, taken all the way to a working function.</strong></p>
   </div></section>
 
-  <!-- 31 WHAT IT PROVES -->
+  <!-- 33 WHAT IT PROVES -->
   <section class="slide"><div class="inner">
     <div class="kicker">Bottom line</div>
     <h2>What this proves</h2>
@@ -619,7 +674,7 @@ qubit[5] q;
     <p class="lead center">Research PDF → verified science → a working quantum function — reproducibly, on a laptop.</p>
   </div></section>
 
-  <!-- 32 REFERENCES -->
+  <!-- 34 REFERENCES -->
   <section class="slide"><div class="inner">
     <div class="kicker">References &amp; sources</div>
     <h2>Go deeper</h2>
@@ -636,7 +691,7 @@ qubit[5] q;
     </div>
   </div></section>
 
-  <!-- 33 CLOSE -->
+  <!-- 35 CLOSE -->
   <section class="slide"><div class="inner center">
     <div class="atom spin"><i></i><i></i><i></i><span class="nuc"></span></div>
     <div class="kicker">From research paper to runnable qubits</div>
